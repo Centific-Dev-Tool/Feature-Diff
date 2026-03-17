@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \":*)",
+      "Bash(python feature_compare.py)",
+      "Bash(python feature_overlap.py)",
+      "Bash(python simple_diff.py)",
+      "Bash(python feature_unique.py)",
+      "Bash(python main.py)"
+    ]
+  }
+}

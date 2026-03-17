@@ -1,0 +1,141 @@
+[
+  {
+    "feature_id": "56194618",
+    "feature_name": "StateRepository_TileView_GetMaxChangeIdByUser_QueryOptimization",
+    "description": "优化按用户查询 TileView 状态变更 ID 的 StateRepository 查询路径，减少重复 I/O。",
+    "processes": [
+      "ShellExperienceHost.exe",
+      "StartMenuExperienceHost.exe",
+      "explorer.exe"
+    ],
+    "registry_paths": [
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartPage",
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\CloudStore\\Store\\Cache\\DefaultAccount",
+      "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer"
+    ],
+    "file_paths": [
+      "C:\\Users\\test\\AppData\\Local\\Microsoft\\Windows\\Explorer\\thumbcache.db",
+      "C:\\Users\\test\\AppData\\Local\\Packages\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\LocalState",
+      "C:\\Windows\\System32\\config\\systemprofile\\AppData\\Local"
+    ],
+    "dll_modules": [
+      "StateRepository.Core.dll",
+      "Windows.Storage.dll",
+      "twinapi.appcore.dll",
+      "explorerframe.dll"
+    ]
+  },
+  {
+    "feature_id": "56298040",
+    "feature_name": "RequireOnlyMachineExternalLocationOnProvisionedAppsUsingExternalLocation",
+    "description": "限制 Provisioned App 使用 External Location 时仅依赖机器级路径，而非用户级路径。",
+    "processes": [
+      "svchost.exe",
+      "dism.exe",
+      "SystemSettings.exe"
+    ],
+    "registry_paths": [
+      "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Appx",
+      "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing",
+      "HKLM\\Software\\Microsoft\\Provisioning",
+      "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\SideBySide"
+    ],
+    "file_paths": [
+      "C:\\Program Files\\WindowsApps",
+      "C:\\Windows\\System32\\AppxPackaging.dll",
+      "C:\\Windows\\WinSxS"
+    ],
+    "dll_modules": [
+      "AppxDeploymentServer.dll",
+      "AppxPackaging.dll",
+      "provengine.dll",
+      "dismapi.dll"
+    ]
+  },
+  {
+    "feature_id": "59360959",
+    "feature_name": "Feature_OpenWithHardeningControl",
+    "description": "加强 OpenWith 关联处理的安全校验，减少可劫持路径与弱信任来源。",
+    "processes": [
+      "explorer.exe",
+      "RuntimeBroker.exe",
+      "ShellExperienceHost.exe"
+    ],
+    "registry_paths": [
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts",
+      "HKCU\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache",
+      "HKLM\\Software\\Classes",
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer"
+    ],
+    "file_paths": [
+      "C:\\Windows\\System32\\en-US\\OpenWith.exe.mui",
+      "C:\\Windows\\System32\\shell32.dll",
+      "C:\\Users\\test\\AppData\\Local\\Temp"
+    ],
+    "dll_modules": [
+      "shell32.dll",
+      "windows.storage.dll",
+      "shlwapi.dll",
+      "user32.dll"
+    ]
+  },
+  {
+    "feature_id": "60514134",
+    "feature_name": "StateRepository_TileView_GetMaxChangeIdByUser_QueryOptimization",
+    "description": "进一步收敛 TileView ChangeId 查询到当前 SID 作用域，降低 Explorer/Shell 的状态同步成本。",
+    "processes": [
+      "explorer.exe",
+      "ShellExperienceHost.exe",
+      "StartMenuExperienceHost.exe"
+    ],
+    "registry_paths": [
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartLayout",
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Taskband",
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FeatureUsage"
+    ],
+    "file_paths": [
+      "C:\\Users\\test\\AppData\\Local\\Microsoft\\Windows\\StateRepository\\StateRepository-User.srd",
+      "C:\\Users\\test\\AppData\\Local\\Microsoft\\Windows\\Explorer\\startmenu.bin",
+      "C:\\Users\\test\\AppData\\Local\\Microsoft\\Windows\\Explorer\\iconcache_idx.db"
+    ],
+    "dll_modules": [
+      "StateRepository.Client.dll",
+      "StartMenu.dll",
+      "twinui.pcshell.dll",
+      "ShellCommon.dll"
+    ]
+  },
+   {
+    "feature_id": "60514281",
+    "feature_name": "FileExplorerBackgroundFlash",
+    "description": "控制 File Explorer 窗口或 XAML Island 在初始化、视图切换或标签页创建时的背景闪烁行为，避免亮色或异常背景在界面绘制过程中的瞬时显示。",
+    "processes": [
+      "explorer.exe",
+      "ShellExperienceHost.exe",
+      "SearchHost.exe",
+      "RuntimeBroker.exe",
+      "dwm.exe"
+    ],
+    "registry_paths": [
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects",
+      "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer"
+    ],
+    "file_paths": [
+      "C:\\Windows\\explorer.exe",
+      "C:\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy",
+      "C:\\Windows\\SystemApps\\Microsoft.Windows.Search_cw5n1h2txyewy",
+      "C:\\Windows\\System32\\dwm.exe"
+    ],
+    "dll_modules": [
+      "Windows.UI.Xaml.dll",
+      "Microsoft.UI.Xaml.dll",
+      "ExplorerFrame.dll",
+      "twinui.pcshell.dll",
+      "dwmcore.dll"
+    ]
+  }
+
+]

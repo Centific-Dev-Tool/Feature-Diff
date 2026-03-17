@@ -1,0 +1,9 @@
+# Python specific
+__pycache__/
+*.pyc
+
+# Generated files and logs
+*.csv
+*.txt
+log/
+*.log
