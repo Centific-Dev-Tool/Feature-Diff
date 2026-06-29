@@ -1,23 +1,113 @@
 import json
-import os
-from collections import Counter
-from typing import Dict, List, Set, Tuple, Any
-
+import re
 import pandas as pd
+from typing import Dict, List, Set, Any, Tuple
+import anthropic
+
+# ======================== 配置区域 ========================
+
+API_KEY = "3NppV7aT7TcVDoURp24nPpBivUf9iKglNq64XLxGJRSEcnGNotonJXtZySRCasc1J"
+BASE_URL = "https://api.stepfun.com/step_plan"
+MODEL = "step-router-v1"
+TIMEOUT_MS = 3_000_000  # 3000 秒
+
+# =========================================================
 
 
-# 四大类权重
-DEFAULT_WEIGHTS = {
-    "process": 0.20,
-    "registry": 0.35,
-    "file": 0.25,
-    "dll": 0.20,
+def get_text(response) -> str:
+    """从 response 中提取纯文本（跳过 ThinkingBlock）"""
+    parts = []
+    for block in response.content:
+        if block.type == "text":
+            parts.append(block.text)
+        elif block.type == "thinking":
+            # 可选：打印思考过程
+            # print(f"[思考] {block.thinking}")
+            pass
+    return "\n".join(parts)
+
+
+# 创建客户端（延迟初始化）
+_client: anthropic.Anthropic | None = None
+
+
+def _get_client() -> anthropic.Anthropic:
+    global _client
+    if _client is None:
+        _client = anthropic.Anthropic(
+            api_key=API_KEY,
+            base_url=BASE_URL,
+            timeout=TIMEOUT_MS / 1000.0,
+        )
+    return _client
+
+
+# =========================
+# 语义对比：用模型判断 error_desc 与 feature_meaning 是否一致
+# =========================
+
+COMPARE_SYSTEM_PROMPT = """\
+你是一个 Windows 功能特征分析专家。你的任务是判断两个描述是否属于同一“Windows 功能领域 / 子系统”。
+
+请仅回答一个字："是" 或 "否"。
+
+判断规则：
+1. 只判断是否属于同一 Windows 功能子系统或技术领域（例如：输入法系统、文件系统、网络系统、进程管理、UI显示系统等）
+2. 不要根据具体软件名称或厂商进行判断（例如“2345输入法”“王牌输入法”只是实现，不影响归类）
+3. 只要两个描述属于同一功能域/同一类系统能力，即使功能点不同，也判定为“是”
+4. 如果明显属于不同系统或不同技术领域，则判定为“否”
+5. 忽略产品级差异，只看系统级归属
+6. 绝对不要输出任何解释、标点或换行"""
+
+
+def compare_semantic(error_desc: str, feature_meaning: str) -> str:
+    """
+    用 LLM 判断 error_desc 与 feature_meaning 是否描述同一个问题。
+    返回 "是" 或 "否"。
+    """
+    if not error_desc.strip():
+        return "否"
+
+    prompt = f"""【错误描述】\n{error_desc.strip()}\n\n【特征含义】\n{feature_meaning.strip()}"""
+
+    response = _get_client().messages.create(
+        model=MODEL,
+        max_tokens=8,
+        system=COMPARE_SYSTEM_PROMPT,
+        temperature=0.0,
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+    )
+
+    answer = get_text(response).strip()
+    if "是" in answer:
+        return "是"
+    return "否"
+
+
+# =========================
+# 常量
+# =========================
+_FILE_OPS: Set[str] = {
+    "createfile", "readfile", "writefile", "queryopen", "closefile",
+    "setbasicinformationfile", "queryinformationfile",
+    "setdispositioninformationfile", "setrenameinformationfile",
+    "setallocationinformationfile", "lockfile", "unlockfile",
+    "flushbuffersfile", "queryeafile", "seteafile", "load image",
+}
+
+# Procmon 常见结果/状态码，用于 path_to_sig 中的状态后缀识别
+_KNOWN_RESULTS: Set[str] = {
+    "name not found", "no more entries", "buffer overflow",
+    "no such file", "success", "reparse", "path not found",
+    "access denied", "sharing violation", "end of file",
+    "invalid parameter", "is directory", "not a directory",
+    "file locked with only readers", "cannot enumerate",
+    "no more files", "no such device",
 }
 
 
-# =========================
-# 基础工具函数
-# =========================
 def norm_text(value: Any) -> str:
     """统一文本格式：转字符串、去空白、转小写。"""
     if value is None or (isinstance(value, float) and pd.isna(value)):
@@ -25,42 +115,27 @@ def norm_text(value: Any) -> str:
     return str(value).strip().lower()
 
 
-def safe_basename(path: str) -> str:
-    """从路径中提取文件名。"""
-    if not path:
-        return ""
-    path = str(path).replace("/", "\\")
-    return os.path.basename(path).lower()
+def normalize_path(path: str) -> str:
+    """统一路径格式。"""
+    p = norm_text(path).replace("/", "\\")
+    p = re.sub(r"\\+", lambda _: "\\", p)
+    return p.rstrip("\\")
 
 
-def is_registry_operation(operation: str) -> bool:
+def is_registry_path(path: str) -> bool:
+    """判断是否为注册表路径。"""
+    p = str(path).strip()
+    return p.startswith("HKLM") or p.startswith("HKCU") or p.startswith("HKCR") or p.startswith("HKU")
+
+
+def is_registry_operation(op: str) -> bool:
     """判断是否为注册表相关操作。"""
-    op = norm_text(operation)
-    return op.startswith("reg")
+    return norm_text(op).startswith("reg")
 
 
-def is_file_operation(operation: str) -> bool:
+def is_file_operation(op: str) -> bool:
     """判断是否为文件/映像相关操作。"""
-    op = norm_text(operation)
-    file_ops = {
-        "createfile",
-        "readfile",
-        "writefile",
-        "queryopen",
-        "closefile",
-        "setbasicinformationfile",
-        "queryinformationfile",
-        "setdispositioninformationfile",
-        "setrenameinformationfile",
-        "setallocationinformationfile",
-        "lockfile",
-        "unlockfile",
-        "flushbuffersfile",
-        "queryeafile",
-        "seteafile",
-        "load image",
-    }
-    return op in file_ops
+    return norm_text(op) in _FILE_OPS
 
 
 def is_dll_path(path: str) -> bool:
@@ -68,59 +143,21 @@ def is_dll_path(path: str) -> bool:
     return norm_text(path).endswith(".dll")
 
 
-def normalize_path(path: str) -> str:
-    """统一路径格式，便于比较。"""
-    p = norm_text(path).replace("/", "\\")
-    while "\\\\" in p:
-        p = p.replace("\\\\", "\\")
-    return p.rstrip("\\")
-
-
-def path_match(feature_path: str, actual_path: str) -> bool:
-    """
-    路径匹配规则：
-    1. 完全相等
-    2. 实际路径以 feature_path 开头
-    3. feature_path 被包含在实际路径中
-    """
-    fp = normalize_path(feature_path)
-    ap = normalize_path(actual_path)
-
-    if not fp or not ap:
-        return False
-
-    return ap == fp or ap.startswith(fp) or fp in ap
-
-
 # =========================
 # 读取 Feature JSON
 # =========================
 def load_features(json_path: str) -> List[Dict[str, Any]]:
-    """从 JSON 文件加载 feature 列表。"""
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
-
     if not isinstance(data, list):
         raise ValueError("features.json 顶层必须是 list。")
-
-    required_keys = {
-        "feature_id",
-        "feature_name",
-        "description",
-        "processes",
-        "registry_paths",
-        "file_paths",
-        "dll_modules",
-    }
-
+    required = {"feature_id", "feature_name", "feature_meaning", "processes", "paths", "dll_modules"}
     for i, item in enumerate(data):
         if not isinstance(item, dict):
-            raise ValueError(f"第 {i + 1} 个 feature 不是对象(dict)。")
-
-        missing = required_keys - set(item.keys())
+            raise ValueError(f"第 {i + 1} 个 feature 不是对象。")
+        missing = required - set(item.keys())
         if missing:
             raise ValueError(f"第 {i + 1} 个 feature 缺少字段: {sorted(missing)}")
-
     return data
 
 
@@ -128,283 +165,190 @@ def load_features(json_path: str) -> List[Dict[str, Any]]:
 # 读取 Procmon CSV
 # =========================
 def find_column(df: pd.DataFrame, candidates: List[str]) -> str:
-    """按大小写不敏感方式寻找列名。"""
     column_map = {c.strip().lower(): c for c in df.columns}
-    for candidate in candidates:
-        key = candidate.strip().lower()
-        if key in column_map:
-            return column_map[key]
+    for c in candidates:
+        k = c.strip().lower()
+        if k in column_map:
+            return column_map[k]
     return ""
 
 
 def extract_procmon_features(df: pd.DataFrame) -> Dict[str, Any]:
-    """
-    从 Procmon CSV 中提取四类特征：
-    - processes
-    - registry_paths
-    - file_paths
-    - dll_modules (从 Path 和 Detail 列提取)
-    同时保留频次信息，后续可用于展示。
-    """
-    process_col = find_column(df, ["Process Name", "ProcessName"])
-    path_col = find_column(df, ["Path"])
-    operation_col = find_column(df, ["Operation"])
-    detail_col = find_column(df, ["Detail"])
+    process_col = find_column(df, ["process name", "processname"])
+    path_col = find_column(df, ["path"])
+    operation_col = find_column(df, ["operation"])
+    result_col = find_column(df, ["result"])
+    prototype_col = find_column(df, ["prototype"])
+    detail_col = find_column(df, ["detail"])
 
-    if not process_col or not path_col or not operation_col:
-        raise ValueError("Procmon CSV 必须包含列：Process Name, Path, Operation")
+    if not process_col or not path_col:
+        raise ValueError("Procmon CSV 必须包含列：Process Name, Path")
 
-    processes_counter = Counter()
-    registry_counter = Counter()
-    file_counter = Counter()
-    dll_counter = Counter()
+    processes_set: Set[str] = set()
+    paths_set: Set[str] = set()
+    dll_set: Set[str] = set()
 
-    for _, row in df.iterrows():
-        process_name = norm_text(row.get(process_col, ""))
-        path = str(row.get(path_col, "")).strip()
-        operation = norm_text(row.get(operation_col, ""))
-        detail = str(row.get(detail_col, "")).strip() if detail_col else ""
+    # 建立列名到索引的映射，用于 itertuples 快速访问
+    col_map = {name: idx for idx, name in enumerate(df.columns)}
+    p_idx = col_map[process_col]
+    path_idx = col_map[path_col]
+    op_idx = col_map.get(operation_col) if operation_col else None
+    res_idx = col_map.get(result_col) if result_col else None
+    proto_idx = col_map.get(prototype_col) if prototype_col else None
+    detail_idx = col_map.get(detail_col) if detail_col else None
+
+    for row in df.itertuples(index=False, name=None):
+        process_name = norm_text(row[p_idx])
+        path = str(row[path_idx]).strip() if row[path_idx] is not None else ""
+        operation = row[op_idx] if op_idx is not None else ""
+        result = str(row[res_idx]).strip() if res_idx is not None and row[res_idx] is not None else ""
+        prototype = str(row[proto_idx]).strip() if proto_idx is not None and row[proto_idx] is not None else ""
+        detail = str(row[detail_idx]).strip() if detail_idx is not None and row[detail_idx] is not None else ""
 
         if process_name:
-            processes_counter[process_name] += 1
+            processes_set.add(process_name)
 
-        if is_registry_operation(operation) and path:
-            registry_counter[path] += 1
+        # 拼接 prototype + result 作为状态
+        extra = ""
+        if prototype and result:
+            extra = f"{prototype}|{result}"
+        elif prototype:
+            extra = prototype
+        elif result:
+            extra = result
 
-        if is_file_operation(operation) and path:
-            file_counter[path] += 1
+        # 只处理注册表或文件操作
+        op_norm = norm_text(operation)
+        is_reg_op = is_registry_operation(op_norm)
+        is_file_op = is_file_operation(op_norm)
 
-        # 从 Path 列提取 DLL
+        if (is_reg_op or is_file_op) and path:
+            p = normalize_path(path)
+            if extra:
+                paths_set.add(f"{p}|{norm_text(extra)}")
+            else:
+                paths_set.add(p)
+
+        # DLL 从 Path 列提取
         if path and is_dll_path(path):
-            dll_counter[safe_basename(path)] += 1
+            dll_set.add(norm_text(path))
 
-        # 从 Detail 列提取 DLL
+        # DLL 从 Detail 列提取
         if detail:
-            # Detail 中可能包含 DLL 路径，查找 .dll 结尾的内容
             for part in detail.replace("/", "\\").split("\\"):
                 if part.lower().endswith(".dll"):
-                    dll_counter[part.lower()] += 1
+                    dll_set.add(part.lower())
 
     return {
-        "processes": set(processes_counter.keys()),
-        "registry_paths": set(registry_counter.keys()),
-        "file_paths": set(file_counter.keys()),
-        "dll_modules": set(dll_counter.keys()),
-        "process_counts": dict(processes_counter),
-        "registry_counts": dict(registry_counter),
-        "file_counts": dict(file_counter),
-        "dll_counts": dict(dll_counter),
+        "processes": processes_set,
+        "paths": paths_set,
+        "dll_modules": dll_set,
     }
 
 
-# =========================
-# 匹配打分逻辑
-# =========================
+def path_to_sig(path: str) -> str:
+    """
+    将 feature 中的 path 转换为与 procmon 相同的签名格式。
+    feature 的 path 可能已包含状态后缀（如 _NAME NOT FOUND）。
+    签名格式：normalized_path|status 或仅 normalized_path
+    """
+    p = str(path).strip()
+    p_norm = normalize_path(p)
+
+    # 检查是否有状态后缀：最后一个 _ 后的部分
+    if "_" in p_norm:
+        base, suffix = p_norm.rsplit("_", 1)
+        # 后缀是已知的 Procmon 结果，或包含空格（多词结果），或全大写（单次如 SUCCESS）
+        if suffix in _KNOWN_RESULTS or " " in suffix or suffix.isupper():
+            return f"{base}|{suffix}"
+
+    return p_norm
 
 
-def score_exact_list(feature_items: List[str], actual_items: Set[str]) -> Tuple[float, List[str], List[str]]:
-    """用于进程名、DLL 名这类精确匹配（现改为包含匹配）。"""
-    feature_norm = [norm_text(x) for x in feature_items if norm_text(x)]
-    actual_list = [norm_text(x) for x in actual_items if norm_text(x)]
+def match_feature(feature: Dict[str, Any], actual: Dict[str, Any]) -> Tuple[int, Set[str], Set[str], Set[str]]:
+    """纯集合匹配，返回 (匹配总数, 匹配的进程集合, 匹配的路径集合, 匹配的DLL集合)。"""
+    # 1) 进程
+    f_proc = {norm_text(p) for p in feature.get("processes", []) if p}
+    matched_procs = f_proc & actual["processes"]
 
-    # 包含匹配：feature中的项是否被actual_items中的任意一项包含
-    matched = [x for x in feature_norm if any(x in a for a in actual_list)]
-    missing = [x for x in feature_norm if not any(x in a for a in actual_list)]
+    # 2) 路径（注册表+文件合并）
+    f_paths = {path_to_sig(p) for p in feature.get("paths", []) if p}
+    matched_paths = f_paths & actual["paths"]
 
-    if not feature_norm:
-        return 0.0, [], []
+    # 3) DLL
+    f_dll = {norm_text(d) for d in feature.get("dll_modules", []) if d}
+    matched_dlls = f_dll & actual["dll_modules"]
 
-    score = len(set(matched)) / len(set(feature_norm))
-    return round(score, 4), sorted(set(matched)), sorted(set(missing))
-
-
-def score_path_list(feature_paths: List[str], actual_paths: Set[str]) -> Tuple[float, List[str], List[str]]:
-    """用于注册表路径、文件路径这类路径匹配。"""
-    matched = []
-    missing = []
-
-    for fp in feature_paths:
-        hit = False
-        for ap in actual_paths:
-            if path_match(fp, ap):
-                matched.append(fp)
-                hit = True
-                break
-        if not hit:
-            missing.append(fp)
-
-    if not feature_paths:
-        return 0.0, [], []
-
-    score = len(set(matched)) / len(set(feature_paths))
-    return round(score, 4), sorted(set(matched)), sorted(set(missing))
+    total = len(matched_procs) + len(matched_paths) + len(matched_dlls)
+    return total, matched_procs, matched_paths, matched_dlls
 
 
-def calculate_total_score(
-    process_score: float,
-    registry_score: float,
-    file_score: float,
-    dll_score: float,
-    weights: Dict[str, float],
-) -> float:
-    total = (
-        weights["process"] * process_score
-        + weights["registry"] * registry_score
-        + weights["file"] * file_score
-        + weights["dll"] * dll_score
-    )
-    return round(total, 4)
-
-
-def match_one_feature(
-    feature: Dict[str, Any],
-    actual: Dict[str, Any],
-    weights: Dict[str, float],
-) -> Dict[str, Any]:
-    """将单个 feature 与提取出的 procmon 特征做匹配。"""
-    process_score, matched_processes, missing_processes = score_exact_list(
-        feature.get("processes", []), actual.get("processes", set())
-    )
-    registry_score, matched_registry, missing_registry = score_path_list(
-        feature.get("registry_paths", []), actual.get("registry_paths", set())
-    )
-    file_score, matched_files, missing_files = score_path_list(
-        feature.get("file_paths", []), actual.get("file_paths", set())
-    )
-    dll_score, matched_dlls, missing_dlls = score_exact_list(
-        feature.get("dll_modules", []), actual.get("dll_modules", set())
-    )
-
-    total_score = calculate_total_score(
-        process_score, registry_score, file_score, dll_score, weights
-    )
-
-    return {
-        "feature_id": feature.get("feature_id", ""),
-        "feature_name": feature.get("feature_name", ""),
-        "description": feature.get("description", ""),
-        "total_score": total_score,
-        "process_score": process_score,
-        "registry_score": registry_score,
-        "file_score": file_score,
-        "dll_score": dll_score,
-        "matched_processes": matched_processes,
-        "matched_registry": matched_registry,
-        "matched_files": matched_files,
-        "matched_dlls": matched_dlls,
-        "missing_processes": missing_processes,
-        "missing_registry": missing_registry,
-        "missing_files": missing_files,
-        "missing_dlls": missing_dlls,
-    }
-
-
-def match_all_features(
+def find_all_matches(
     procmon_csv_path: str,
     features_json_path: str,
-    output_json_path: str = "",
-    top_n: int = 5,
-) -> Dict[str, Any]:
-    """
-    主函数：
-    1. 读取 procmon CSV
-    2. 读取 features.json
-    3. 逐个 feature 匹配
-    4. 返回 top 结果
-    """
+) -> List[Dict[str, Any]]:
     df = pd.read_csv(procmon_csv_path, low_memory=False, encoding="utf-8-sig")
     features = load_features(features_json_path)
     actual = extract_procmon_features(df)
 
-    results = [match_one_feature(feature, actual, DEFAULT_WEIGHTS) for feature in features]
-    results = sorted(results, key=lambda x: x["total_score"], reverse=True)
+    results = []
+    for feature in features:
+        match_count, matched_procs, matched_paths, matched_dlls = match_feature(feature, actual)
+        results.append({
+            "feature_id": feature["feature_id"],
+            "feature_name": feature["feature_name"],
+            "feature_meaning": feature.get("feature_meaning", ""),
+            "match_count": match_count,
+            "matched_processes": sorted(matched_procs),
+            "matched_paths": sorted(matched_paths),
+            "matched_dlls": sorted(matched_dlls),
+        })
 
-    summary = {
-        "procmon_csv": procmon_csv_path,
-        "features_json": features_json_path,
-        "weights": DEFAULT_WEIGHTS,
-        "best_feature": results[0] if results else None,
-        "top_features": results[:top_n],
-        "actual_summary": {
-            "process_count": len(actual["processes"]),
-            "registry_path_count": len(actual["registry_paths"]),
-            "file_path_count": len(actual["file_paths"]),
-            "dll_count": len(actual["dll_modules"]),
-            "top_processes": Counter(actual["process_counts"]).most_common(10),
-            "top_dlls": Counter(actual["dll_counts"]).most_common(10),
-        },
-    }
-
-    if output_json_path:
-        with open(output_json_path, "w", encoding="utf-8") as f:
-            json.dump(summary, f, ensure_ascii=False, indent=2)
-
-    return summary
+    results.sort(key=lambda x: x["match_count"], reverse=True)
+    # 过滤：必须有路径或 DLL 匹配，只匹配到进程的不要
+    results = [r for r in results if r["matched_paths"] or r["matched_dlls"]]
+    return results
 
 
-def print_result(summary: Dict[str, Any]) -> None:
-    """在控制台打印结果。"""
-    best = summary.get("best_feature")
-    if not best:
-        print("没有匹配到任何 feature。")
-        return
-
-    print("=" * 80)
-    print("最匹配的 Feature")
-    print("=" * 80)
-    print(f"Feature ID   : {best['feature_id']}")
-    print(f"Feature Name : {best['feature_name']}")
-    print(f"Description  : {best['description']}")
-    print(f"Total Score  : {best['total_score']}")
-    print(f"Process      : {best['process_score']}")
-    print(f"Registry     : {best['registry_score']}")
-    print(f"File         : {best['file_score']}")
-    print(f"DLL          : {best['dll_score']}")
-    print("\n命中的进程:")
-    print(best["matched_processes"])
-    print("\n命中的注册表路径:")
-    print(best["matched_registry"])
-    print("\n命中的文件路径:")
-    print(best["matched_files"])
-    print("\n命中的 DLL:")
-    print(best["matched_dlls"])
-
-    print("\n" + "=" * 80)
-    print("Top Features")
-    print("=" * 80)
-    for idx, item in enumerate(summary.get("top_features", []), start=1):
-        print(
-            f"{idx}. {item['feature_id']} {item['feature_name']} | "
-            f"total={item['total_score']} | "
-            f"p={item['process_score']} r={item['registry_score']} "
-            f"f={item['file_score']} d={item['dll_score']}"
-        )
-
-# 60900113 Family key：56194618 第一
-# 61216728 Adobe Accrobat Reader key：59360959 第一
-# 61115254 Explorer key：60514281 第三
-# 61252218 LoiLoScope key：60514134
-# 60944229 Adobe Creative cloud key：56298040 第二
+def print_all_matches(all_results: List[Dict[str, Any]]) -> None:
+    print("=" * 70)
+    print(f"All Matching Features (共 {len(all_results)} 条)")
+    print("=" * 70)
+    for idx, item in enumerate(all_results, start=1):
+        print(f"\n#{idx} {item['feature_id']}  {item['feature_name']}")
+        if item.get("feature_meaning"):
+            print(f"   含义     : {item.get('feature_meaning')}")
+        print(f"   总匹配数 : {item['match_count']}")
+        if item["matched_processes"]:
+            print(f"   进程     : {item['matched_processes']}")
+        if item["matched_paths"]:
+            print(f"   路径     : {item['matched_paths']}")
+        if item["matched_dlls"]:
+            print(f"   DLL     : {item['matched_dlls']}")
 
 
 if __name__ == "__main__":
-    # ===== 修改成你的实际文件路径 =====
-    procmon_csv_path = "D:/Python/LogTool/Automated Scraping-tool/log/60900113 Family key：56194618/diff_result.csv"
+    # ======================== 输入区域 ========================
+    error_desc = ""  # <-- 在这里填写错误描述
+    procmon_csv_path = "D:/Python/LogTool/log/62423292 王牌输入法 key 34762752 57979372/日志/repro.csv"
     features_json_path = "features.json"
-    output_json_path = "match_result.json"
+    # =========================================================
 
-    if not os.path.exists(procmon_csv_path):
-        print(f"未找到 Procmon CSV 文件: {procmon_csv_path}")
-        print("请把你的 Procmon CSV 改名为 repro_procmon.csv，或者修改脚本中的路径。")
-    elif not os.path.exists(features_json_path):
-        print(f"未找到 Feature JSON 文件: {features_json_path}")
-        print("请确认 features.json 与脚本在同一目录，或修改脚本中的路径。")
+    all_matches = find_all_matches(procmon_csv_path, features_json_path)
+    print_all_matches(all_matches)
+
+    # ---- 语义对比（对所有匹配结果逐一比对） ----
+    if error_desc.strip():
+        print("\n" + "=" * 70)
+        print("语义对比: error_desc vs feature_meaning（全部匹配结果）")
+        print("=" * 70)
+        for idx, item in enumerate(all_matches, start=1):
+            meaning = item.get("feature_meaning", "")
+            if not meaning:
+                continue
+            result = compare_semantic(error_desc, meaning)
+            print(f"\n#{idx} [{item['feature_id']}] {item['feature_name']}")
+            print(f"   特征含义: {meaning}")
+            print(f"   语义匹配: {result}")
     else:
-        result = match_all_features(
-            procmon_csv_path=procmon_csv_path,
-            features_json_path=features_json_path,
-            output_json_path=output_json_path,
-            top_n=5,
-        )
-        print_result(result)
-        print(f"\n匹配结果已保存到: {output_json_path}")
+        print("\n[提示] 设置 error_desc 变量后可进行语义对比")

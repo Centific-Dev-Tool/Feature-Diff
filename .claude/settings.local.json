@@ -6,7 +6,25 @@
       "Bash(python feature_overlap.py)",
       "Bash(python simple_diff.py)",
       "Bash(python feature_unique.py)",
-      "Bash(python main.py)"
+      "Bash(python main.py)",
+      "Bash(mv \"Feature自动匹配定位工具说明.docx\" Feature_Auto_Match_Tool.docx)",
+      "Bash(ren \"Feature自动匹配定位工具说明.docx\" Feature_Auto_Match_Tool.docx)",
+      "Bash(python test_parse.py)",
+      "Bash(python -m py_compile feature_matcher.py)",
+      "Bash(python -c \"import feature_matcher; print\\('Import OK'\\)\")",
+      "Bash(pip list *)",
+      "Bash(python demo.py)",
+      "Bash(python -c ' *)",
+      "Bash(PYTHONIOENCODING=utf-8 python -c ' *)",
+      "Bash(PYTHONIOENCODING=utf-8 python demo.py)",
+      "Bash(ls \"D:/Python/LogTool/log/62423292 王牌输入法 key 34762752 57979372/日志/repro.csv\" 2>/dev/null && echo \"EXISTS\" || echo \"NOT FOUND\")",
+      "Read(//d/Python/LogTool/log/62423292 王牌输入法 key 34762752 57979372/日志/**)",
+      "Bash(PYTHONIOENCODING=utf-8 python feature_matcher.py)",
+      "Bash(python -c \"import py_compile; py_compile.compile\\('feature_matcher.py', doraise=True\\); print\\('Syntax OK'\\)\")",
+      "Bash(python -c \"import json; json.load\\(open\\('features.json','r',encoding='utf-8'\\)\\); print\\('JSON OK'\\)\")",
+      "Bash(python -c \"import re; result = re.sub\\(r'\\\\x5c\\\\x5c+', lambda _: '\\\\x5c\\\\x5c', 'a\\\\x5c\\\\x5c\\\\x5c\\\\x5cb'\\); print\\(repr\\(result\\)\\)\")",
+      "Bash(python test_feature_matcher.py)",
+      "Bash(python algorithms.py)"
     ]
   }
 }

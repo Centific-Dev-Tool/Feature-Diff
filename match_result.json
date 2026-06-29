@@ -1,0 +1,216 @@
+{
+  "procmon_csv": "D:/Python/LogTool/log/61789130 Pure Codec(完美解密)  key：57204904 47205210/repro_no noise_result.csv",
+  "features_json": "features.json",
+  "weights": {
+    "process": 0.2,
+    "registry": 0.35,
+    "file": 0.25,
+    "dll": 0.2
+  },
+  "best_feature": {
+    "feature_id": "34762752",
+    "feature_name": "InputSupportForBcp47",
+    "total_score": 0.0,
+    "process_score": 0.0,
+    "registry_score": 0.0,
+    "file_score": 0.0,
+    "dll_score": 0.0,
+    "matched_processes": [],
+    "matched_registry": [],
+    "matched_files": [],
+    "matched_dlls": [],
+    "missing_processes": [],
+    "missing_registry": [],
+    "missing_files": [
+      "file|c:\\users\\test\\appdata\\local\\iconcache.db|name not found"
+    ],
+    "missing_dlls": []
+  },
+  "top_features": [
+    {
+      "feature_id": "34762752",
+      "feature_name": "InputSupportForBcp47",
+      "total_score": 0.0,
+      "process_score": 0.0,
+      "registry_score": 0.0,
+      "file_score": 0.0,
+      "dll_score": 0.0,
+      "matched_processes": [],
+      "matched_registry": [],
+      "matched_files": [],
+      "matched_dlls": [],
+      "missing_processes": [],
+      "missing_registry": [],
+      "missing_files": [
+        "file|c:\\users\\test\\appdata\\local\\iconcache.db|name not found"
+      ],
+      "missing_dlls": []
+    },
+    {
+      "feature_id": "57979372",
+      "feature_name": "KeyboardSettings_InputProfileHotkeys ",
+      "total_score": 0.0,
+      "process_score": 0.0,
+      "registry_score": 0.0,
+      "file_score": 0.0,
+      "dll_score": 0.0,
+      "matched_processes": [],
+      "matched_registry": [],
+      "matched_files": [],
+      "matched_dlls": [],
+      "missing_processes": [],
+      "missing_registry": [],
+      "missing_files": [
+        "file|c:\\users\\test\\appdata\\local\\iconcache.db|name not found"
+      ],
+      "missing_dlls": []
+    },
+    {
+      "feature_id": "57204904",
+      "feature_name": "DuplicateTilesInAllAppsFix",
+      "total_score": 0.0,
+      "process_score": 0.0,
+      "registry_score": 0.0,
+      "file_score": 0.0,
+      "dll_score": 0.0,
+      "matched_processes": [],
+      "matched_registry": [],
+      "matched_files": [],
+      "matched_dlls": [],
+      "missing_processes": [],
+      "missing_registry": [],
+      "missing_files": [
+        "reg|hklm\\software\\microsoft\\windowsruntime\\activatableclassid\\startmenu.startcontroller|name not found"
+      ],
+      "missing_dlls": []
+    },
+    {
+      "feature_id": "47205210",
+      "feature_name": "Feature_UndockAllAppsList",
+      "total_score": 0.0,
+      "process_score": 0.0,
+      "registry_score": 0.0,
+      "file_score": 0.0,
+      "dll_score": 0.0,
+      "matched_processes": [],
+      "matched_registry": [],
+      "matched_files": [],
+      "matched_dlls": [],
+      "missing_processes": [],
+      "missing_registry": [],
+      "missing_files": [
+        "reg|hklm\\software\\microsoft\\windowsruntime\\activatableclassid\\startmenu.startcontroller|name not found"
+      ],
+      "missing_dlls": []
+    },
+    {
+      "feature_id": "60570053",
+      "feature_name": "WhiteFlashOnPanes",
+      "total_score": 0.0,
+      "process_score": 0.0,
+      "registry_score": 0.0,
+      "file_score": 0.0,
+      "dll_score": 0.0,
+      "matched_processes": [],
+      "matched_registry": [],
+      "matched_files": [],
+      "matched_dlls": [],
+      "missing_processes": [],
+      "missing_registry": [],
+      "missing_files": [
+        "file|c:\\users\\test\\appdata\\local\\concache.db|name not found"
+      ],
+      "missing_dlls": []
+    }
+  ],
+  "actual_summary": {
+    "process_count": 22,
+    "registry_path_count": 7548,
+    "file_path_count": 474,
+    "dll_count": 143,
+    "top_processes": [
+      [
+        "svchost.exe",
+        7910
+      ],
+      [
+        "msmpeng.exe",
+        1201
+      ],
+      [
+        "explorer.exe",
+        672
+      ],
+      [
+        "startmenuexperiencehost.exe",
+        556
+      ],
+      [
+        "searchhost.exe",
+        394
+      ],
+      [
+        "ctfmon.exe",
+        299
+      ],
+      [
+        "services.exe",
+        216
+      ],
+      [
+        "sihost.exe",
+        110
+      ],
+      [
+        "wmiprvse.exe",
+        106
+      ],
+      [
+        "lsass.exe",
+        70
+      ]
+    ],
+    "top_dlls": [
+      [
+        "netsetupengine.dll",
+        29
+      ],
+      [
+        "cryptowinrt.dll",
+        22
+      ],
+      [
+        "flightsettings.dll",
+        21
+      ],
+      [
+        "microsoft.data.usageandqualityinsights.dll",
+        20
+      ],
+      [
+        "systemsettings.datamodel.dll",
+        20
+      ],
+      [
+        "windows.storage.search.dll",
+        20
+      ],
+      [
+        "winnsi.dll",
+        19
+      ],
+      [
+        "icu.dll",
+        19
+      ],
+      [
+        "propsys.dll",
+        19
+      ],
+      [
+        "windows.web.dll",
+        19
+      ]
+    ]
+  }
+}

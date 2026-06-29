@@ -1,141 +1,139 @@
 [
   {
-    "feature_id": "56194618",
-    "feature_name": "StateRepository_TileView_GetMaxChangeIdByUser_QueryOptimization",
-    "description": "优化按用户查询 TileView 状态变更 ID 的 StateRepository 查询路径，减少重复 I/O。",
-    "processes": [
-      "ShellExperienceHost.exe",
-      "StartMenuExperienceHost.exe",
-      "explorer.exe"
+    "feature_id": "34762752",
+    "feature_name": "InputSupportForBcp47",
+    "feature_meaning": "为输入法添加 BCP 47 语言标签标准支持（如 en-US、zh-CN），影响语言/输入法切换时的区域标识匹配",
+    "processes": [],
+    "paths": [
+      "HKCU/Software/Microsoft/CTF/DirectSwitchHotkeys_NAME NOT FOUND",
+      "HKCU/Keyboard Layout/DirectSwitchHotKeys_NO MORE ENTRIES",
+      "HKCU/Keyboard Layout/Preload_NO MORE ENTRIES"
     ],
-    "registry_paths": [
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartPage",
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\CloudStore\\Store\\Cache\\DefaultAccount",
-      "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer"
-    ],
-    "file_paths": [
-      "C:\\Users\\test\\AppData\\Local\\Microsoft\\Windows\\Explorer\\thumbcache.db",
-      "C:\\Users\\test\\AppData\\Local\\Packages\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\LocalState",
-      "C:\\Windows\\System32\\config\\systemprofile\\AppData\\Local"
-    ],
-    "dll_modules": [
-      "StateRepository.Core.dll",
-      "Windows.Storage.dll",
-      "twinapi.appcore.dll",
-      "explorerframe.dll"
-    ]
+    "dll_modules": []
   },
   {
-    "feature_id": "56298040",
-    "feature_name": "RequireOnlyMachineExternalLocationOnProvisionedAppsUsingExternalLocation",
-    "description": "限制 Provisioned App 使用 External Location 时仅依赖机器级路径，而非用户级路径。",
-    "processes": [
-      "svchost.exe",
-      "dism.exe",
-      "SystemSettings.exe"
+    "feature_id": "57979372",
+    "feature_name": "KeyboardSettings_InputProfileHotkeys",
+    "feature_meaning": "键盘设置中输入法配置的热键管理，控制 DirectSwitchHotKeys 注册表项的读写，影响语言栏/输入法切换快捷键",
+    "processes": [],
+    "paths": [
+      "HKCU/Software/Microsoft/CTF/DirectSwitchHotkeys_NAME NOT FOUND",
+      "HKCU/Keyboard Layout/DirectSwitchHotKeys_NO MORE ENTRIES",
+      "HKCU/Keyboard Layout/Preload_NO MORE ENTRIES"
     ],
-    "registry_paths": [
-      "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Appx",
-      "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Component Based Servicing",
-      "HKLM\\Software\\Microsoft\\Provisioning",
-      "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\SideBySide"
-    ],
-    "file_paths": [
-      "C:\\Program Files\\WindowsApps",
-      "C:\\Windows\\System32\\AppxPackaging.dll",
-      "C:\\Windows\\WinSxS"
-    ],
-    "dll_modules": [
-      "AppxDeploymentServer.dll",
-      "AppxPackaging.dll",
-      "provengine.dll",
-      "dismapi.dll"
-    ]
+    "dll_modules": []
   },
   {
-    "feature_id": "59360959",
-    "feature_name": "Feature_OpenWithHardeningControl",
-    "description": "加强 OpenWith 关联处理的安全校验，减少可劫持路径与弱信任来源。",
-    "processes": [
-      "explorer.exe",
-      "RuntimeBroker.exe",
-      "ShellExperienceHost.exe"
+    "feature_id": "57204904",
+    "feature_name": "DuplicateTilesInAllAppsFix",
+    "feature_meaning": "修复开始菜单「所有应用」列表中磁贴重复出现的问题，涉及 StartMenu.StartController 的 Windows Runtime 类激活",
+    "processes": ["Explorer.exe"],
+    "paths": [
+      "HKLM/SOFTWARE/Microsoft/WindowsRuntime/ActivatableClassId/StartMenu.StartController_NAME NOT FOUND"
     ],
-    "registry_paths": [
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts",
-      "HKCU\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache",
-      "HKLM\\Software\\Classes",
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer"
+    "dll_modules": []
+  },
+  {
+    "feature_id": "47205210",
+    "feature_name": "Feature_UndockAllAppsList",
+    "feature_meaning": "支持「所有应用」列表从开始菜单中分离/独立显示，同样依赖 StartMenu.StartController 的 WinRT 激活类",
+    "processes": ["Explorer.exe"],
+    "paths": [
+      "HKLM/SOFTWARE/Microsoft/WindowsRuntime/ActivatableClassId/StartMenu.StartController_NAME NOT FOUND"
     ],
-    "file_paths": [
-      "C:\\Windows\\System32\\en-US\\OpenWith.exe.mui",
-      "C:\\Windows\\System32\\shell32.dll",
-      "C:\\Users\\test\\AppData\\Local\\Temp"
+    "dll_modules": []
+  },
+  {
+    "feature_id": "60570053",
+    "feature_name": "WhiteFlashOnPanes",
+    "feature_meaning": "修复窗口面板在切换/重绘时出现白色闪烁的问题，涉及图标缓存 (IconCache.db) 的渲染行为",
+    "processes": [],
+    "paths": [
+      "C:/Users/test/AppData/Local/IconCache.db_NAME NOT FOUND"
     ],
-    "dll_modules": [
-      "shell32.dll",
-      "windows.storage.dll",
-      "shlwapi.dll",
-      "user32.dll"
-    ]
+    "dll_modules": []
   },
   {
     "feature_id": "60514134",
-    "feature_name": "StateRepository_TileView_GetMaxChangeIdByUser_QueryOptimization",
-    "description": "进一步收敛 TileView ChangeId 查询到当前 SID 作用域，降低 Explorer/Shell 的状态同步成本。",
-    "processes": [
-      "explorer.exe",
-      "ShellExperienceHost.exe",
-      "StartMenuExperienceHost.exe"
+    "feature_name": "DiagnosticBackgroundBrushes",
+    "feature_meaning": "后台笔刷诊断功能，用于调试窗口背景绘制/合成层的渲染问题，可能与 WhiteFlashOnPanes 同属 UI 渲染相关",
+    "processes": [],
+    "paths": [
+      "C:/Users/test/AppData/Local/IconCache.db_NAME NOT FOUND"
     ],
-    "registry_paths": [
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartLayout",
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Taskband",
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FeatureUsage"
-    ],
-    "file_paths": [
-      "C:\\Users\\test\\AppData\\Local\\Microsoft\\Windows\\StateRepository\\StateRepository-User.srd",
-      "C:\\Users\\test\\AppData\\Local\\Microsoft\\Windows\\Explorer\\startmenu.bin",
-      "C:\\Users\\test\\AppData\\Local\\Microsoft\\Windows\\Explorer\\iconcache_idx.db"
-    ],
-    "dll_modules": [
-      "StateRepository.Client.dll",
-      "StartMenu.dll",
-      "twinui.pcshell.dll",
-      "ShellCommon.dll"
-    ]
+    "dll_modules": []
   },
-   {
-    "feature_id": "60514281",
-    "feature_name": "FileExplorerBackgroundFlash",
-    "description": "控制 File Explorer 窗口或 XAML Island 在初始化、视图切换或标签页创建时的背景闪烁行为，避免亮色或异常背景在界面绘制过程中的瞬时显示。",
-    "processes": [
-      "explorer.exe",
-      "ShellExperienceHost.exe",
-      "SearchHost.exe",
-      "RuntimeBroker.exe",
-      "dwm.exe"
+  {
+    "feature_id": "59337016",
+    "feature_name": "ShellExperienceHost_ShareSheet_FullTrustApp",
+    "feature_meaning": "为 Shell 体验主机的分享面板添加对完全信任 (Full Trust / Win32) 应用的支持，涉及 Discord 等桌面应用的图标读取",
+    "processes": ["ShellExperienceHost.exe"],
+    "paths": [
+      "C:/Users/test/AppData/Local/Discord/app.ico_BUFFER OVERFLOW"
     ],
-    "registry_paths": [
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects",
-      "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer"
+    "dll_modules": []
+  },
+  {
+    "feature_id": "61412562",
+    "feature_name": "IntlWordBreakerGrep",
+    "feature_meaning": "国际化文本分词器的 Grep 搜索支持，用于在国际化文本中按词语边界进行精确搜索/匹配，影响 AllApps 的卸载项显示",
+    "processes": ["SearchHost.exe"],
+    "paths": [
+      "HKCR/Launcher.AllAppsDesktopApplication/Shell/Uninstall/ShowAsDisabledIfHidden_NAME NOT FOUND"
     ],
-    "file_paths": [
-      "C:\\Windows\\explorer.exe",
-      "C:\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy",
-      "C:\\Windows\\SystemApps\\Microsoft.Windows.Search_cw5n1h2txyewy",
-      "C:\\Windows\\System32\\dwm.exe"
+    "dll_modules": []
+  },
+  {
+    "feature_id": "59388597",
+    "feature_name": "FullTrustUndockedSearchApp",
+    "feature_meaning": "运行一个“完全信任”的搜索应用（FullTrust），并且**独立于主界面（undocked）**运行。",
+    "processes": ["msedge.exe"],
+    "paths": [
+      "HKLM/SOFTWARE/Microsoft/WindowsRuntime/ActivatableClassId/Windows.UI.Shell.TaskbarManager/Permissions_NAME NOT FOUND",
+      "HKLM/SOFTWARE/Microsoft/WindowsRuntime/ActivatableClassId/Windows.UI.Shell.TaskbarManager/ActivateAsUser_NAME NOT FOUND"
     ],
-    "dll_modules": [
-      "Windows.UI.Xaml.dll",
-      "Microsoft.UI.Xaml.dll",
-      "ExplorerFrame.dll",
-      "twinui.pcshell.dll",
-      "dwmcore.dll"
-    ]
+    "dll_modules": []
+  },
+  {
+    "feature_id": "58778013",
+    "feature_name": "PrelaunchFileExplorerArchitected",
+    "feature_meaning": "File Explorer 的预启动（prelaunch）优化配置",
+    "processes": ["Explorer.exe"],
+    "paths": [
+      "HKLM/SOFTWARE/Microsoft/WindowsRuntime/ActivatableClassId/Windows.UI.Internal.Input.InputSite/CustomAttributes_NAME NOT FOUND"
+    ],
+    "dll_modules": []
+  },
+  {
+    "feature_id": "61127915",
+    "feature_name": "AsyncPiiSafeTelemetry",
+    "feature_meaning": "异步（Async）采集的 个人身份信息安全（PII Safe） 的 遥测（Telemetry） 模块。",
+    "processes": ["WPWIN21.exe"],
+    "paths": [
+      "HKCU/Software/Classes/Local Settings/Software/Microsoft/Windows/Shell/Bags/AllFolders/Shell_NAME NOT FOUND",
+      "HKCU/Software/Microsoft/Windows/CurrentVersion/Explorer/CabinetState_NAME NOT FOUND"
+    ],
+    "dll_modules": []
+  },
+  {
+    "feature_id": "61014170",
+    "feature_name": "SkipLauncherDllLoad",
+    "feature_meaning": "启动器在启动时跳过加载某些 DLL 的标志。",
+    "processes": ["XboxPcAppCE.exe","XboxPcAppFT.exe"],
+    "paths": [
+      "HKCU/Software/Microsoft/Xbox/GamingApp_NAME NOT FOUND",
+      "HKCU/SOFTWARE/Microsoft/Xbox/GamingApp/Extensions/_NAME NOT FOUND"
+    ],
+    "dll_modules": []
+  },
+  {
+    "feature_id": "47942828",
+    "feature_name": "MatsOnCancel",
+    "feature_meaning": "异步操作被取消时的内部跟踪或事件标志。",
+    "processes": ["olk.exe"],
+    "paths": [
+      "C:/Users/test/AppData/Local/Microsoft/OneAuth/blobs/k285838@outlook.com_identity_provider_No_SUCH_FILE"
+    ],
+    "dll_modules": []
   }
-
 ]
